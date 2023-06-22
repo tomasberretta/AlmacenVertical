@@ -115,10 +115,12 @@ def homing(motor):
         motor.close()
         time.sleep(1)
 
-
-motor_ready(motor_z)  # z
-
-motor_ready(motor_x)  # x
+def get_motors_ready():
+    motor_ready(motor_z)  # z
+    motor_ready(motor_x)  # x
+    motor_ready(motor_r)  # x
+    time.sleep(10)
+    move_motor(motor_r, 0x0000, 0xC350)
 
 
 # %%----------------------------------------------------------------
@@ -147,14 +149,28 @@ def move_motor(motor, posH, posL):
         motor.close()
         time.sleep(1)
 
+def move_to_box():
+    move_motor(motor_z, 0x0003, 0x7460)  # posicion caja arriba
+    time.sleep(10)
+    move_motor(motor_x, 0x0002, 0x0F58)  # posicion caja horizontal
+    time.sleep(10)
+    close_gripper()
 
-move_motor(motor_z, 0x0003, 0x7492)  # posicion caja arriba
-time.sleep(10)
-move_motor(motor_x, 0x0002, 0x0F58)  # posicion caja horizontal
+    homing(motor_x)
+    # homing(motor_z)
+    time.sleep(10)
+    move_motor(motor_r, 0x0000, 0x9C40)  # posicion caja arriba
 
-homing(motor_z)
-homing(motor_x)
-time.sleep(10)
+    time.sleep(10)
+    move_motor(motor_r, 0x0000, 0xC350)
+    move_motor(motor_x, 0x0002, 0x0F58)  # posicion caja horizontal
+    open_gripper()
+    homing(motor_x)
+    homing(motor_z)
+
+
+
+
 
 # %%----------------------------------------------------------------
 
@@ -172,22 +188,25 @@ time.sleep(10)
 #
 ON = 0xFF00  # to activate the coil
 OFF = 0x0000 # to deactivate the coil
-plc_coil_address = 0x0500 # Modbus Address Table DELTA PLC. E.g, ,0x0500 is Y0, 0x501 is Y1, and so on.
+plc_coil_address = 0x0503 # Modbus Address Table DELTA PLC. E.g, ,0x0500 is Y0, 0x501 is Y1, and so on.
 
 # write single coil modbus function code
 
-# close gripper
-if plc.open():
-    tx_pdu = struct.pack('>BHH', 0x05, plc_coil_address, ON) #0x05 : WRITE single coil ||
-    plc.custom_request(tx_pdu)
-    plc.close()
-    print("open")
 
-time.sleep(2)
+# close gripper
+def close_gripper():
+    if plc.open():
+        tx_pdu = struct.pack('>BHH', 0x05, plc_coil_address, ON) #0x05 : WRITE single coil ||
+        plc.custom_request(tx_pdu)
+        plc.close()
+        print("open")
+
+    time.sleep(2)
 
 # open gripper
-if plc.open():
-    tx_pdu = struct.pack('>BHH', 0x05, plc_coil_address, OFF) #0x05 : WRITE single coil ||
-    plc.custom_request(tx_pdu)
-    plc.close()
-    print("close")
+def open_gripper():
+    if plc.open():
+        tx_pdu = struct.pack('>BHH', 0x05, plc_coil_address, OFF) #0x05 : WRITE single coil ||
+        plc.custom_request(tx_pdu)
+        plc.close()
+        print("close")

@@ -69,6 +69,8 @@
         <br>
         <button id="executeButton">Execute</button>
         <br>
+        <button id="readyButton">Ready</button>
+        <br>
         <div id="result"></div>
     </div>
 
@@ -99,6 +101,26 @@
             } else {
                 document.getElementById("result").innerHTML = "Please enter amount and select a size.";
             }
+        });
+
+         document.getElementById("readyButton").addEventListener("click", function () {
+
+                var xhr = new XMLHttpRequest();
+                xhr.open("POST", "http://127.0.0.1:5000/ready", true);
+
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === XMLHttpRequest.DONE) {
+                        if (xhr.status === 200) {
+                            var response = JSON.parse(xhr.responseText);
+                            document.getElementById("result").innerHTML = "Result: " + response.result;
+                        } else {
+                            document.getElementById("result").innerHTML = "Error: " + xhr.responseText;
+                        }
+                    }
+                };
+
+                xhr.send();
+
         });
 
         // Button click handlers for selecting size
