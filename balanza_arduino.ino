@@ -42,79 +42,95 @@ void setup() {
   pinMode(POWER_PIN, OUTPUT);
   digitalWrite(POWER_PIN, HIGH);
   pinMode(POWER_PINN, OUTPUT);
+
   digitalWrite(POWER_PINN, HIGH);
 }
-
+bool ready = false;
+String instruction = "Instruction: ";
 
 void loop() {
 
-  if (Serial.available() > 0) {            // Si hay datos disponibles en el puerto serial
-    clavosSolictados = Serial.parseInt();  // Leer un valor entero y asignarlo al parámetro
-    Serial.print("Clavos solicitados: ");  // Imprimir un mensaje de confirmación
-    Serial.println(clavosSolictados);
-    char arTValue = Serial.read();           // Leer una cadena de texto y asignarla al parámetro
-    Serial.print("Tipo de artículo: ");  // Imprimir un mensaje de confirmación
-    Serial.println(arTValue);
-    switch (arTValue) {  // Asignar el valor numérico según el identificador
-      case 'C':
-        arT = 1;
-        break;
-      case 'M':
-        arT = 2;
-        break;
-      case 'G':
-        arT = 3;
-        break;
-      default:
-        Serial.println("Identificador inválido");
-        exit(0);
+  // check if there is any data available in the serial port
+  if (Serial.available() > 0) {
+    // read the serial data until newline character
+    String read = Serial.readStringUntil('\n');
+    // check if the read string starts with the instruction
+    if (read.startsWith(instruction)) {
+      // set the variable to ready
+      ready = true;
+      // parse the type from the read string
+      String TYPE_STRING = read.substring(13, 14);
+      // convert the type to a numerical value using switch-case statement
+      switch (TYPE_STRING.charAt(0)) {
+        case 'C':
+          arT = 1;
+          break;
+        case 'M':
+          arT = 2;
+          break;
+        case 'G':
+          arT = 3;
+          break;
+        default:
+          arT = 1;
+          break;
+      }
+      // parse the amount from the read string
+      String AMOUNT_STRING = read.substring(15);
+      // convert the amount to a numerical value using toInt() function
+      clavosSolictados = AMOUNT_STRING.toInt();
+      Serial.println("Working");
+    } else {
+    Serial.println("OK");
+  }
+  }
+
+  if (ready) {
+    if (clavosSolictados == 0 || clavosSolictados < 0) {       // Si el valor es 0 o negativo
+      Serial.println("Valor inválido de clavos solicitados");  // Imprimir un mensaje de error
+      exit(0);                                                 // Salir del loop
     }
-  }
-
-  if (clavosSolictados == 0 || clavosSolictados < 0) {  // Si el valor es 0 o negativo
-    Serial.println("Valor inválido de clavos solicitados");                         // Imprimir un mensaje de error
-    exit(0);                                                                        // Salir del loop
-  }
-
-  // necesitamos psar de peso a unidades, con el siguiente if podemos saber el numero de clavos en la balanza segun el tamaño de clavos
-  pesoR = balanza.get_units(20);
-  if (arT == 1) {
-    clavosReales = pesoR * 2500;
-  } else if (arT == 2) {
-    clavosReales = pesoR * 1000;
-  } else if (arT == 3) {
-    clavosReales = pesoR * 500;
-  }
-
-
-  delay(1000);
-  if (clavosReales < clavosSolictados) {  // si el N° real es menor que el peso solicitado necesita mas clavos,
-
+    // necesitamos psar de peso a unidades, con el siguiente if podemos saber el numero de clavos en la balanza segun el tamaño de clavos
+    pesoR = balanza.get_units(20);
     if (arT == 1) {
-      Serial.println(pesoR * 2500, 0);  // 40 calvos son 20 gramos
+      clavosReales = pesoR * 2500;
     } else if (arT == 2) {
-      Serial.println(pesoR * 1000, 0);  //
+      clavosReales = pesoR * 1000;
     } else if (arT == 3) {
-      Serial.println(pesoR * 500, 0);  //
+      clavosReales = pesoR * 500;
     }
 
-    //Aca deberia ir la señal al robot de festo
+    delay(1000);
+    if (clavosReales < clavosSolictados) {  // si el N° real es menor que el peso solicitado necesita mas clavos,
 
-  } else {
-    if (arT == 1) {
-      descarga();  // realizamos descarga en la posicion de 1 (home)
-    } else if (arT == 2) {
-      rotacionUno();  // rotamos hasta la posicion 2
-      delay(1000);
-      descarga();  // descargamos
-      delay(10);
-      rotacionUnoVuelta();  // volvemos al home
-    } else if (arT == 3) {
-      rotacionDos();  // rotamos hasta la posicion 3
-      delay(1000);
-      descarga();  //descargamos
-      delay(10);
-      rotacionDosVuelta();  // volvemos a home
+      if (arT == 1) {
+        Serial.println(pesoR * 2500, 0);  // 40 calvos son 20 gramos
+      } else if (arT == 2) {
+        Serial.println(pesoR * 1000, 0);  //
+      } else if (arT == 3) {
+        Serial.println(pesoR * 500, 0);  //
+      }
+
+      //Aca deberia ir la señal al robot de festo
+
+    } else {
+      if (arT == 1) {
+        descarga();  // realizamos descarga en la posicion de 1 (home)
+      } else if (arT == 2) {
+        rotacionUno();  // rotamos hasta la posicion 2
+        delay(1000);
+        descarga();  // descargamos
+        delay(10);
+        rotacionUnoVuelta();  // volvemos al home
+      } else if (arT == 3) {
+        rotacionDos();  // rotamos hasta la posicion 3
+        delay(1000);
+        descarga();  //descargamos
+        delay(10);
+        rotacionDosVuelta();  // volvemos a home
+      }
+      Serial.println("OK");
+      ready = false;
     }
   }
 }
