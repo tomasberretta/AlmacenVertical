@@ -81,7 +81,7 @@ def execute_endpoint():
 
         # TODO. Check if data should be sent to scale here
         # TODO. finish route
-        festo_service.move_to_box()  # TODO. according to the request move to specific box
+        festo_service.move_to_box(size)
         # robot.move_to_box()  # TODO. Check if this is needed
         result = execute_function(amount, size)
         result = scale_service.send_to_scale(parsed_instruction) # TODO. Check if this should only be a read

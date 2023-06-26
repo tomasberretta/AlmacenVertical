@@ -19,7 +19,7 @@ class FestoService:
     def __init__(self, logger: Logger):
         self._logger = logger
 
-        # Motor Y
+        # Motor Z
         self._logger.debug("Initializing Motor Y")
         motor_z = ModbusClient(timeout=2)
         motor_z.host = os.getenv("MOTOR_Y_HOST", '192.168.1.3')
@@ -82,6 +82,10 @@ class FestoService:
         self._logger.debug(f"PLC initialized with host: {plc.host} and port: {plc.port}")
 
         self._motors = [self._motor_x, self._motor_z, self._motor_r]
+
+        self._boxes_z = [(0x0003, 0x70AA), (0x0005, 0x2A44), (0x0006, 0x6DD0)]
+
+        self._boxes_x = (0x0002, 0x0F58)
 
     def _reset_flag(self, motor):
         # reset (rising edge)
@@ -197,23 +201,30 @@ class FestoService:
 
         return True
 
-    def move_to_box(self):
-        self._move_motor(self._motor_z, 0x0003, 0x7460)  # posicion caja arriba
+    def move_to_box(self, index):
+
+        z_coordinate = self._boxes_z[index]
+
+        # takes the box
+        self._move_motor(self._motor_z, z_coordinate[0], z_coordinate[1])  # posicion caja arriba
         time.sleep(10)
-        self._move_motor(self._motor_x, 0x0002, 0x0F58)  # posicion caja horizontal
+        self._move_motor(self._motor_x, self._boxes_x[0], self._boxes_x[1])  # posicion caja horizontal
         time.sleep(10)
         self.close_gripper()
 
         self._homing(self._motor_x)
         # homing(motor_z)
         time.sleep(10)
-        self._move_motor(self._motor_r, 0x0000, 0x9C40)  # posicion caja arriba
+
+        # puts it back (?)
+        self._move_motor(self._motor_r, z_coordinate[0], z_coordinate[1])  # posicion caja arriba
 
         time.sleep(10)
         self._move_motor(self._motor_r, 0x0000, 0xC350)
-        self._move_motor(self._motor_x, 0x0002, 0x0F58)  # posicion caja horizontal
+        self._move_motor(self._motor_x, self._boxes_x[0], self._boxes_x[1])  # posicion caja horizontal
         self.open_gripper()
         self._homing(self._motor_x)
+        time.sleep(10)
         self._homing(self._motor_z)
 
     def close_gripper(self):
