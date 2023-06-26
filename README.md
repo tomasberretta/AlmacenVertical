@@ -15,9 +15,18 @@ The system can perform the following tasks:
 - Move the product from a shelf to a scale and read its weight.
 - Execute a predefined sequence of actions based on the size and amount of the product.
 
-## Prerequisites
+## Software Prerequisites
 - Python 3.10.0
 - pip 20.2.4
+
+## Hardware Prerequisites
+- Arduino One with program `balanza_arduino.ino` loaded.
+- Arduino Uno connected to the computer.
+- Energy source connected to arduino: 1.5 A and 6 V.
+- Festo controllers set to Modbus/TCP
+- Compressed air valve connected to the gripper and on.
+- Festo controllers and PLC connected to the same network.
+
 
 ## Installation
 ```bash
@@ -56,6 +65,9 @@ Their default values are on the `.env` file and are:
 - PLC_HOST=192.168.1.5
 - PLC_PORT=502
 
+_**Note**: The ARDUINO_PORT is the one that is used to connect the Arduino to the computer. For Windows generally is COM9, but it can be checked on the Arduino IDE. For MacOS 
+it is something like /dev/cu.usbmodem11101._
+
 ## Starting venv and server
 
 If running on Windows:
@@ -86,12 +98,12 @@ curl -X GET http://<FLASK_HOST>:<FLASK_PORT>/health
 This endpoint is used to execute a command to move the motors and the gripper according to the size and amount of the product, and set the scale to wait for those fields, weigh them and then separate them accordingly.
 
 ``` bash
-curl -X POST http://<FLASK_HOST>:<FLASK_PORT>/execute -H "Content-Type: application/json" -d '{"size": "C", "amount": 10}'
+curl -X POST http://<FLASK_HOST>:<FLASK_PORT>/execute -H "Content-Type: application/json" -d '{"size": 0, "amount": 10}'
 ```
 
 The JSON body must have the following fields:
 
-- `size`: a string that indicates the size of the product. It can be one of "C", "M" or "G".
+- `size`: an integer that indicates the size of the product. It can be one of 0, 1, 2 which represent "C"/"Small", "M"/"Medium" or "G"/"Big".
 - `amount`: an integer that indicates the amount of the product. It must be between 0 and 100.
 
 ### Ready
@@ -171,13 +183,13 @@ The JSON body must have the following fields:
 ### Send to scale
 `/send-to-scale`
 
-This endpoint is used to send a command to the scale and read its weight.
+This endpoint is used to send a instruction to the scale.
 
 ``` bash
-curl -X POST http://<FLASK_HOST>:<FLASK_PORT>/send-to-scale -H "Content-Type: application/json" -d '{"size": "C", "amount": 10}'
+curl -X POST http://<FLASK_HOST>:<FLASK_PORT>/send-to-scale -H "Content-Type: application/json" -d '{"size": 0, "amount": 10}'
 ```
 
 The JSON body must have the following fields:
 
-- `size`: a string that indicates the size of the product. It can be one of "C", "M" or "G".
+- `size`: an integer that indicates the size of the product. It can be one of 0, 1, 2 which represent "C"/"Small", "M"/"Medium" or "G"/"Big".
 - `amount`: an integer that indicates the amount of the product. It must be between 0 and 100.

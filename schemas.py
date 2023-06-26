@@ -2,7 +2,7 @@ from marshmallow import Schema, fields, validate
 
 
 class SendScaleRequestSchema(Schema):
-    size = fields.Str(required=True, validate=validate.OneOf(["C", "M", "G"]))
+    size = fields.Integer(required=True, validate=lambda x: 0 <= x <= 2)
     amount = fields.Integer(required=True, validate=lambda x: 0 <= x <= 100)
 
 

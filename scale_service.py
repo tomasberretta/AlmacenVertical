@@ -24,9 +24,11 @@ except TypeError:
 class ScaleService:
 
     def __init__(self, logger: Logger):
+        """Scale Service initialization"""
         self._logger = logger
         try:
             if os.getenv("MOCK") == "True":
+                # Only for testing purposes
                 self._ser = get_serial_mock()
             else:
                 self._ser = serial.Serial(port, baudrate=baud_rate, timeout=timeout)
@@ -36,43 +38,21 @@ class ScaleService:
         self._logger.info(f"ScaleService initialized with port: {port}, baud-rate: {baud_rate}, timeout: {timeout}")
 
     def send_to_scale(self, instruction):
+        """Function to send instruction to the scale"""
+
         output_value = instruction + '\n'
         output_bytes = output_value.encode()
 
         self._ser.write(output_bytes)
         self._logger.info(f"Sent to Arduino: {output_value.strip()}")
         time.sleep(5)
-
-        # TODO. check if this is needed here or should be separated
-        self._logger.info("Waiting for Arduino to be ready...")
-
-        response_serial = ""
-        while response_serial != "OK":
-            try:
-                response_serial = self._ser.readline().decode().strip()
-            except ValueError:
-                pass
-            self._logger.info(f"Got from serial port: {response_serial}")
-            if response_serial != "OK":
-                self._logger.info("Waiting for Arduino to be ready...")
-        time.sleep(5)
-        return f"Done: {output_value.strip()}"
+        return f"Sent: {output_value.strip()}"
 
     def read_from_scale(self):
-        self._logger.info("Waiting for Arduino to be ready...")
-
-        response_serial = ""
-        while response_serial != "OK":
-            try:
-                response_serial = self._ser.readline().decode().strip()
-            except ValueError:
-                pass
-            self._logger.info(f"Got from serial port: {response_serial}")
-            if response_serial != "OK":
-                self._logger.info("Waiting for Arduino to be ready...")
-        time.sleep(5)
-        return True
+        """Function to read the weight or serial port from the scale"""
+        return self._ser.readline().decode().strip()
 
     def stop_scale_connection(self):
+        """Function to close the serial port"""
         self._ser.close()
         self._logger.info("Serial connection closed")
